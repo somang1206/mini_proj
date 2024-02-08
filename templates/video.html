@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition WebCam</title>
+</head>
+<body>
+    <h1>Face Recognition Service (Access Control)</h1>
+    <div>
+        <img id="videoElement" src="" alt="web camera" style="max-width: 800px;">
+    </div>
+    
+
+    <div id="buttons">
+        <button type="button" id="webcamBtn">캡쳐하기</button>
+        <input type="text" id="fileName" placeholder="사용자의 이름을 영문으로 입력하세요">
+        <button type="button" id="saveBtn">저장하기</button>
+    </div>
+    <div>
+        <canvas id="canvas" width="800px" height="800px"></canvas>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('videoElement');
+        const webcamBtn = document.getElementById('webcamBtn');
+        const fileNameInput = document.getElementById('fileName');
+        const saveBtn = document.getElementById('saveBtn');
+        let imageData = null;
+        const webSocket = new WebSocket('ws://localhost:8000/ws');
+        const canvas = document.getElementById('canvas')
+        const context = canvas.getContext('2d');   
+    
+
+        webSocket.onmessage = function(event) {
+            const frameData = event.data;
+            const blob = new Blob([frameData], { type: 'image/jpeg' }); // Blob 객체 생성
+            const imageUrl = URL.createObjectURL(blob); // Blob 객체를 이미지 URL로 변환
+            videoElement.src = imageUrl; // 이미지 URL을 이미지 요소의 src에 할당하여 이미지 로드
+            console.log(imageUrl)
+        };
+
+
+
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition WebCam</title>
+</head>
+<body>
+    <h1>Face Recognition Service (Access Control)</h1>
+
+    <video id="video" width="720" height="540" autoplay muted></video>
+    
+
+    <div id="buttons">
+        <button type="button" id="webcamBtn">캡쳐하기</button>
+        <input type="text" id="fileName" placeholder="사용자의 이름을 영문으로 입력하세요">
+        <button type="button" id="saveBtn">저장하기</button>
+    </div>
+    <div>
+        <canvas id="canvas" width="800px" height="800px"></canvas>
+    </div>
+
+
+    <script>
+        const videoElement = document.getElementById('videoElement');
+        const webcamBtn = document.getElementById('webcamBtn');
+        const fileNameInput = document.getElementById('fileName');
+        const saveBtn = document.getElementById('saveBtn');
+        let imageData = null;
+        const webSocket = new WebSocket('ws://localhost:8000/ws');
+        const canvas = document.getElementById('canvas')
+        const context = canvas.getContext('2d');   
+    
+
+        // webSocket.onmessage = function(event) {
+        //     const frameData = event.data;
+        //     const blob = new Blob([frameData], { type: 'image/jpeg' }); // Blob 객체 생성
+        //     const imageUrl = URL.createObjectURL(blob); // Blob 객체를 이미지 URL로 변환
+        //     videoElement.src = imageUrl; // 이미지 URL을 이미지 요소의 src에 할당하여 이미지 로드
+        //     console.log(imageUrl)
+        // };
+
+        //웹캠 실행
+        const video = document.getElementById("video");
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(error => {
+                console.error('Error accessing webcam:', error);
+            });
+
+
+        webcamBtn.addEventListener('click', function () {
+            document.getElementById("webcamBtn").addEventListener("click", function() {
+            context.drawImage(video, 0, 0, 960, 720);
+            });
+        });
+
+        
+
+        saveBtn.addEventListener('click', async () => {
+            const fileName = fileNameInput.value.trim();
+            const canvas = document.getElementById('canvas');
+            const imageData = canvas.toDataURL('image/jpeg');
+            // const downloadLink = document.createElement('a');
+            // downloadLink.href = imageData;
+            // downloadLink.download = fileName + '.jpg';
+            if(fileName == "" || imageData == ""){
+                alert('이름을 입력하고 이미지를 캡쳐하세요.');
+                console.log("fileName" , fileName)
+                console.log("imageData" , imageData)
+                return;
+            }
+
+            // console.log("downloadLink:" , downloadLink)
+            // downloadLink.click();
+
+            const blob = await fetch(imageData).then(response => response.blob());
+
+
+            const formData = new FormData();
+            formData.append('fileName', fileName);
+            formData.append('image', blob, `${fileName}.jpg`);
+
+            console.log("fileName :!!!!" , fileName)
+            console.log("imageData :!!!!" , blob)
+            console.log("formData:!!!!!!!" , formData)
+
+            try {
+            const response = await fetch('/save-image', {
+            method: 'POST',
+            body: formData,
+            });
+                if(response.ok){
+                    alert('이미지가 성공적으로 저장되었습니다.');
+                } else {
+                    alert('이미지 저장 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error saving image:', error);
+                alert('이미지 저장 중 오류 발생')
+            }
+                    })
+
+
+        
+    </script>
+</body>
+</html>
